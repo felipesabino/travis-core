@@ -12,7 +12,7 @@ module Travis
         EVENTS = /build:finished/
 
         def handle?
-          !pull_request? && targets.present? && config.send_on_finished_for?(:campfire)
+          enabled? && targets.present? && config.send_on_finished_for?(:campfire)
         end
 
         def handle
@@ -23,7 +23,15 @@ module Travis
           @targets ||= config.notification_values(:campfire, :rooms)
         end
 
-        Instruments::EventHandler.attach_to(self)
+        private
+
+          def enabled?
+            enabled = config.notification_values(:campfire, :on_pull_requests)
+            enabled = false if enabled.nil? or !(!!enabled == enabled) # configuration returns a non boolean if key is not found
+            pull_request? ? enabled : true
+          end
+
+          Instruments::EventHandler.attach_to(self)
       end
     end
   end

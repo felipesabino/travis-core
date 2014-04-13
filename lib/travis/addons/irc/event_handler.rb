@@ -10,7 +10,7 @@ module Travis
         EVENTS = 'build:finished'
 
         def handle?
-          !pull_request? && channels.present? && config.send_on_finished_for?(:irc)
+          enabled? && channels.present? && config.send_on_finished_for?(:irc)
         end
 
         def handle
@@ -21,7 +21,15 @@ module Travis
           @channels ||= config.notification_values(:irc, :channels)
         end
 
-        Instruments::EventHandler.attach_to(self)
+        private
+
+          def enabled?
+            enabled = config.notification_values(:irc, :on_pull_requests)
+            enabled = false if enabled.nil? or !(!!enabled == enabled) # configuration returns a non boolean if key is not found
+            pull_request? ? enabled : true
+          end
+
+          Instruments::EventHandler.attach_to(self)
       end
     end
   end

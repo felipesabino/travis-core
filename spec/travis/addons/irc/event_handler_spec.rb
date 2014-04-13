@@ -44,9 +44,23 @@ describe Travis::Addons::Irc::EventHandler do
       notify
     end
 
-    it 'does not trigger a task if the build is a pull request' do
+    it 'does not trigger a task if the build is a pull request and notifications settings are preset' do
       build.stubs(:pull_request?).returns(true)
       task.expects(:run).never
+      notify
+    end
+
+    it "does not trigger when pull request notifications are disabled" do
+      build.stubs(:config => { :notifications => { :irc => { on_pull_requests: false} } })
+      build.stubs(:pull_request?).returns(true)
+      task.expects(:run).never
+      notify
+    end
+
+    it "trigger when pull request notifications are enabled" do
+      build.stubs(:config => { :notifications => { :irc => { on_pull_requests: true, channels: ['irc.freenode.net#travis'] } } })
+      build.stubs(:pull_request?).returns(true)
+      task.expects(:run).with(:irc, payload, channels: ['irc.freenode.net#travis'])
       notify
     end
 

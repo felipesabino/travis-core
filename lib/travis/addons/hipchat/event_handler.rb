@@ -19,17 +19,19 @@ module Travis
           Travis::Addons::Hipchat::Task.run(:hipchat, payload, targets: targets)
         end
 
-        def enabled?
-          enabled = config.notification_values(:hipchat, :on_pull_requests)
-          enabled = true if enabled.nil?
-          pull_request? ? enabled : true
-        end
-
         def targets
           @targets ||= config.notification_values(:hipchat, :rooms)
         end
 
-        Instruments::EventHandler.attach_to(self)
+        private
+
+          def enabled?
+            enabled = config.notification_values(:hipchat, :on_pull_requests)
+            enabled = false if enabled.nil? or !(!!enabled == enabled) # configuration returns a non boolean if key is not found
+            pull_request? ? enabled : true
+          end
+
+          Instruments::EventHandler.attach_to(self)
       end
     end
   end

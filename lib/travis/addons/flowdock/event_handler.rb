@@ -17,7 +17,7 @@ module Travis
         end
 
         def handle?
-          !pull_request? && targets.present? && config.send_on_finished_for?(:flowdock)
+          enabled? && targets.present? && config.send_on_finished_for?(:flowdock)
         end
 
         def handle
@@ -28,7 +28,15 @@ module Travis
           @targets ||= config.notification_values(:flowdock, :rooms)
         end
 
-        Instruments::EventHandler.attach_to(self)
+        private
+
+          def enabled?
+            enabled = config.notification_values(:flowdock, :on_pull_requests)
+            enabled = false if enabled.nil? or !(!!enabled == enabled) # configuration returns a non boolean if key is not found
+            pull_request? ? enabled : true
+          end
+
+          Instruments::EventHandler.attach_to(self)
       end
     end
   end

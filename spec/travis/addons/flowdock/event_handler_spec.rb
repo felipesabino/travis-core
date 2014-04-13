@@ -44,9 +44,23 @@ describe Travis::Addons::Flowdock::EventHandler do
       notify
     end
 
-    it 'does not trigger a task if the build is a pull request' do
+    it 'does not trigger a task if the build is a pull request and notifications settings are preset' do
       build.stubs(:pull_request?).returns(true)
       task.expects(:run).never
+      notify
+    end
+
+    it "does not trigger when pull request notifications are disabled" do
+      build.stubs(:config => { :notifications => { :flowdock => { on_pull_requests: false } } })
+      build.stubs(:pull_request?).returns(true)
+      task.expects(:run).never
+      notify
+    end
+
+    it "trigger when pull request notifications are enabled" do
+      build.stubs(:config => { :notifications => { :flowdock => { on_pull_requests: true, rooms: ['room'] } } })
+      build.stubs(:pull_request?).returns(true)
+      task.expects(:run).with(:flowdock, payload, targets: ['room'])
       notify
     end
 
